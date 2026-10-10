@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>LingoCraft</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* macOS WebKit instant touch/click optimizations */
+    *, *::before, *::after {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    button, [role="button"], input, select, textarea {
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.96); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    .match-shake {
+      animation: shake 0.35s ease-in-out;
+    }
+    /* Hide scrollbars for clean macOS UI */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-full flex flex-col selection:bg-indigo-500 selection:text-white overflow-x-hidden">
+
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shrink-0">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+      
+      <!-- Brand -->
+      <button type="button" onclick="switchTab('flashcards-view')" class="flex items-center gap-2.5 text-left shrink-0 focus:outline-none">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div>
+          <span class="font-black text-lg sm:text-xl tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">LingoCraft</span>
+        </div>
+      </button>
+
+      <!-- Navigation Tabs (Scrollable on small window sizes) -->
+      <nav class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-1">
+        <button type="button" id="nav-flashcards" onclick="switchTab('flashcards-view')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-sm shrink-0">
+          <span>🃏</span>
+          <span>Карточки</span>
+        </button>
+
+        <button type="button" id="nav-numbers" onclick="switchTab('numbers-view')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center gap-1.5 shrink-0">
+          <span>🔢</span>
+          <span>Числительные</span>
+        </button>
+
+        <button type="button" id="nav-dictionary" onclick="switchTab('dictionary')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center gap-1.5 shrink-0">
+          <span>📖</span>
+          <span>Словарь</span>
+          <span id="badge-total-count" class="text-[10px] sm:text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded-full font-bold">0</span>
+        </button>
+
+        <button type="button" id="nav-train" onclick="switchTab('train')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center gap-1.5 shrink-0">
+          <span>⚡</span>
+          <span>Тренажёры</span>
+        </button>
+      </nav>
+
+      <!-- Quick Add Buttons -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button type="button" onclick="openAddModal()" title="Добавить слово" class="hidden md:inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          Слово
+        </button>
+        <button type="button" onclick="openMassAddModal()" title="Массовый ввод" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span class="hidden sm:inline">Импорт</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Viewports -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 flex flex-col justify-start">
+
+    <!-- VIEW 1: DEDICATED FLASHCARDS -->
+    <section id="view-flashcards" class="w-full flex flex-col items-center justify-center space-y-4 sm:space-y-5 my-auto py-2">
+      
+      <!-- Top Card Toolbar -->
+      <div class="w-full max-w-lg bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5">
+          <select id="fc-filter-mode" onchange="applyFlashcardFilter()" class="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 bg-slate-50 focus:outline-none">
+            <option value="all">Все карточки</option>
+            <option value="learning">Только на изучении</option>
+            <option value="mastered">Выученные ⭐</option>
+          </select>
+          <button type="button" onclick="shuffleFlashcards()" title="Перемешать" class="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+        </div>
+
+        <div class="text-xs font-bold text-slate-500">
+          <span id="fc-current-idx" class="text-indigo-600 font-extrabold text-sm">1</span> / <span id="fc-total-count" class="font-extrabold text-sm">0</span>
+        </div>
+      </div>
+
+      <!-- Single 3D Card (Responsive Fluid Height) -->
+      <div class="w-full max-w-lg">
+        <button type="button" onclick="toggleDedicatedFlashcard()" class="perspective-1000 w-full min-h-[300px] sm:min-h-[350px] md:h-96 text-left focus:outline-none block select-none">
+          <div id="dedicated-card-inner" class="relative w-full h-full transform-style-3d transition-transform duration-500 rounded-3xl shadow-lg border border-slate-200/60">
+            
+            <!-- FRONT FACE (English + Context) -->
+            <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 sm:p-7 flex flex-col justify-between items-center text-center border border-indigo-500/30">
+              <div class="w-full flex justify-between items-center text-xs">
+                <span id="fc-card-status-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/10 text-indigo-200">В процессе</span>
+                <button type="button" onclick="event.stopPropagation(); playCurrentFcAudio()" title="Произношение" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors">
+                  <svg class="w-5 h-5 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                </button>
+              </div>
+
+              <div class="space-y-3 w-full max-w-sm flex flex-col items-center my-auto">
+                <h2 id="fc-card-en" class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight leading-tight">Word</h2>
+                
+                <div id="fc-card-context-box" class="w-full p-3 bg-white/10 border border-white/15 rounded-2xl text-xs sm:text-sm text-indigo-100 italic text-center">
+                  <span class="font-bold text-indigo-300 not-italic mr-1">Контекст:</span>
+                  <span id="fc-card-context">"Пример предложения"</span>
+                </div>
+              </div>
+
+              <div class="text-[11px] text-slate-400">
+                Клик или Пробел — перевернуть ↻
+              </div>
+            </div>
+
+            <!-- BACK FACE (Russian Translation) -->
+            <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white text-slate-800 rounded-3xl p-5 sm:p-7 flex flex-col justify-between items-center text-center border-2 border-indigo-200 shadow-lg">
+              <div class="w-full flex justify-between items-center text-xs">
+                <span class="font-bold text-indigo-600 text-xs">Перевод на русский</span>
+                <button type="button" onclick="event.stopPropagation(); playCurrentFcAudio()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-indigo-600 transition-colors">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                </button>
+              </div>
+
+              <div class="my-auto max-w-sm">
+                <span class="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 block mb-1">Значение</span>
+                <h3 id="fc-card-ru" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 leading-snug">Перевод</h3>
+              </div>
+
+              <div class="text-[11px] text-slate-400">
+                Оцените, помните ли вы это слово
+              </div>
+            </div>
+
+          </div>
+        </button>
+
+        <!-- Bottom Controls -->
+        <div class="flex items-center justify-between gap-2 mt-4">
+          <button type="button" onclick="prevDedicatedCard()" class="px-3.5 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs sm:text-sm border border-slate-200 shadow-sm transition-all flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            <span>Назад</span>
+          </button>
+
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="markFcCard(false)" class="px-3.5 sm:px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs sm:text-sm border border-rose-200 transition-all">
+              Учить 🔄
+            </button>
+            <button type="button" onclick="markFcCard(true)" class="px-3.5 sm:px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all">
+              Знаю ⭐
+            </button>
+          </div>
+
+          <button type="button" onclick="nextDedicatedCard()" class="px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1">
+            <span>Вперёд</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: NUMBERS HUB -->
+    <section id="view-numbers" class="hidden w-full space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 p-4 rounded-3xl border border-amber-200/80">
+        <div>
+          <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold mb-1">Numbers in English</span>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Числительные и произношение</h1>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" id="btn-num-tab-rules" onclick="switchNumbersSubTab('rules')" class="px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-900 text-white shadow-sm transition-all">
+            Карточки правил
+          </button>
+          <button type="button" id="btn-num-tab-game" onclick="switchNumbersSubTab('game')" class="px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-slate-600 hover:bg-slate-100 transition-all">
+            🎮 Игра «Number Master»
+          </button>
+        </div>
+      </div>
+
+      <!-- Rules Subtab -->
+      <div id="num-subtab-rules" class="space-y-4">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
+          <button type="button" onclick="selectNumberCard(0)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-amber-500 bg-amber-500 text-white font-bold">1. База 1–12</button>
+          <button type="button" onclick="selectNumberCard(1)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">2. -teen (13–19)</button>
+          <button type="button" onclick="selectNumberCard(2)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">3. Десятки -ty</button>
+          <button type="button" onclick="selectNumberCard(3)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">4. Дефис (21–99)</button>
+          <button type="button" onclick="selectNumberCard(4)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">5. Сотни & and</button>
+          <button type="button" onclick="selectNumberCard(5)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">6. Тысячи и Миллионы</button>
+          <button type="button" onclick="selectNumberCard(6)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">7. Ловушка S</button>
+          <button type="button" onclick="selectNumberCard(7)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">8. Порядковые</button>
+          <button type="button" onclick="selectNumberCard(8)" class="num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">9. Года, дроби</button>
+        </div>
+
+        <div id="num-card-display-container"></div>
+      </div>
+
+      <!-- Game Subtab -->
+      <div id="num-subtab-game" class="hidden space-y-4">
+        <div id="num-game-selector" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <button type="button" onclick="startNumberGameMode('teenty')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between">
+            <div>
+              <div class="text-2xl mb-2">👂</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base">Ловушка: -teen vs -ty</h3>
+              <p class="text-slate-500 text-xs mt-1">Различайте на слух ударение: 13 vs 30, 14 vs 40, 15 vs 50.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-amber-600">Начать 10 раундов &rarr;</div>
+          </button>
+
+          <button type="button" onclick="startNumberGameMode('audio')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all flex flex-col justify-between">
+            <div>
+              <div class="text-2xl mb-2">🔊</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base">Аудио-Спринт (1–1000+)</h3>
+              <p class="text-slate-500 text-xs mt-1">Диктор произносит составные числа. Успейте нажать правильную цифру.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-indigo-600">Начать спринт &rarr;</div>
+          </button>
+
+          <button type="button" onclick="startNumberGameMode('rules')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all flex flex-col justify-between">
+            <div>
+              <div class="text-2xl mb-2">🎯</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base">Ловушка «S», года и дроби</h3>
+              <p class="text-slate-500 text-xs mt-1">Вопросы на понимание: two hundred или two hundreds? Чтение 1984 и 3.14.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-emerald-600">Начать тест &rarr;</div>
+          </button>
+        </div>
+
+        <div id="num-game-arena" class="hidden max-w-xl mx-auto bg-white rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-lg space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <button type="button" onclick="exitNumberGame()" class="text-xs font-bold text-slate-500 hover:text-slate-800">
+              &larr; Назад
+            </button>
+            <div class="text-xs font-bold text-slate-600">
+              Раунд <span id="ng-round-idx" class="text-amber-600 font-extrabold text-sm">1</span> / <span id="ng-round-total">10</span>
+            </div>
+            <div class="text-xs font-bold text-emerald-600">
+              Счёт: <span id="ng-score" class="font-extrabold text-sm">0</span>
+            </div>
+          </div>
+
+          <div id="ng-interactive-board" class="min-h-[220px] flex flex-col justify-center"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: DICTIONARY -->
+    <section id="view-dictionary" class="hidden w-full space-y-4">
+      
+      <!-- Stats Overview -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-slate-400">Всего слов</div>
+          <div id="stat-total" class="text-xl sm:text-2xl font-black text-slate-900">0</div>
+        </div>
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-slate-400">С контекстом</div>
+          <div id="stat-with-context" class="text-xl sm:text-2xl font-black text-indigo-600">0</div>
+        </div>
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-slate-400">Выучено ⭐</div>
+          <div id="stat-mastered" class="text-xl sm:text-2xl font-black text-emerald-600">0</div>
+        </div>
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-semibold text-slate-400">Изучаются</div>
+          <div id="stat-learning" class="text-xl sm:text-2xl font-black text-amber-500">0</div>
+        </div>
+      </div>
+
+      <!-- Search and Filter Bar -->
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+        <div class="flex-1 flex gap-2">
+          <input type="text" id="vocab-search" oninput="renderVocabularyList()" placeholder="Поиск слова, перевода или примера..." class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+
+          <select id="vocab-filter-status" onchange="renderVocabularyList()" class="px-2.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none">
+            <option value="all">Все</option>
+            <option value="learning">Изучаемые</option>
+            <option value="mastered">Выученные ⭐</option>
+            <option value="has_context">С контекстом</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" onclick="openAddModal()" class="px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-all flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Добавить
+          </button>
+          <button type="button" onclick="exportDataJSON()" title="Экспорт в JSON" class="px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition-colors">
+            Экспорт
+          </button>
+          <label class="px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition-colors">
+            Импорт
+            <input type="file" id="json-file-input" accept=".json" onchange="importDataJSON(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <!-- Vocabulary Grid (Fluid Responsive) -->
+      <div id="vocab-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      
+      <div id="vocab-empty-state" class="hidden text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+        <p class="text-sm font-bold text-slate-700">Слова не найдены</p>
+        <p class="text-xs text-slate-400 mt-1">Измените запрос или добавьте новые слова</p>
+      </div>
+    </section>
+
+    <!-- VIEW 4: TRAINERS -->
+    <section id="view-train" class="hidden w-full space-y-4">
+      
+      <!-- Catalog of Trainers -->
+      <div id="train-menu-view" class="space-y-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Тренажёры для практики</h2>
+          <p class="text-slate-500 text-xs sm:text-sm">Выберите режим для закрепления лексики и правописания.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          
+          <button type="button" onclick="startMode('matching')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center mb-3 shadow-md shadow-indigo-600/20">🔗</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-indigo-600 transition-colors">Сопоставление пар</h3>
+              <p class="text-slate-500 text-xs mt-1">Быстро соединяйте английские слова с их правильными русскими переводами.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-indigo-600">Начать раунд &rarr;</div>
+          </button>
+
+          <button type="button" onclick="startMode('quiz')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center mb-3 shadow-md shadow-emerald-600/20">🎯</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-emerald-600 transition-colors">Тест (4 варианта)</h3>
+              <p class="text-slate-500 text-xs mt-1">Выберите правильный перевод. При ошибке подсвечивается верный ответ.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-emerald-600">Начать тест &rarr;</div>
+          </button>
+
+          <button type="button" onclick="startMode('typing')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center mb-3 shadow-md shadow-amber-600/20">✍️</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-amber-600 transition-colors">Правописание (Спринт)</h3>
+              <p class="text-slate-500 text-xs mt-1">Печатайте английское слово по памяти с подсказками первых букв.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-amber-600">Начать спринт &rarr;</div>
+          </button>
+
+          <button type="button" onclick="startMode('context')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-pink-400 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-pink-600 text-white flex items-center justify-center mb-3 shadow-md shadow-pink-600/20">🧩</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-pink-600 transition-colors">Вставка в контекст</h3>
+              <p class="text-slate-500 text-xs mt-1">Подберите верное слово в пропуск реального предложения.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-pink-600">Начать тренировку &rarr;</div>
+          </button>
+
+          <button type="button" onclick="startMode('crossword')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-teal-400 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center mb-3 shadow-md shadow-teal-600/20">🔠</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-teal-600 transition-colors">Кроссворд по словам</h3>
+              <p class="text-slate-500 text-xs mt-1">Автогенерация пересечений сетки слов с подсказками.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-teal-600">Разгадать кроссворд &rarr;</div>
+          </button>
+
+          <button type="button" onclick="startMode('flashcards')" class="text-left bg-white p-5 rounded-2xl border border-slate-200 hover:border-violet-400 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center mb-3 shadow-md shadow-violet-600/20">🃏</div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-violet-600 transition-colors">Флэш-карточки (Сессия)</h3>
+              <p class="text-slate-500 text-xs mt-1">Интенсивный серийный повтор пакета из 10 слов со статистикой.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs font-bold text-violet-600">Начать сессию &rarr;</div>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Active Workout Arena -->
+      <div id="workout-arena" class="hidden max-w-2xl mx-auto w-full">
+        <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm flex items-center justify-between mb-4">
+          <button type="button" onclick="exitWorkout()" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+            &larr; Назад к меню
+          </button>
+          
+          <div class="flex items-center gap-3">
+            <div class="text-xs font-semibold text-slate-500">
+              <span id="workout-current-step" class="text-indigo-600 font-bold">1</span>/<span id="workout-total-step">10</span>
+            </div>
+            <div class="w-20 sm:w-28 h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div id="workout-progress-bar" class="h-full bg-indigo-600 transition-all duration-300 w-0"></div>
+            </div>
+            <div class="text-xs font-bold text-emerald-600">
+              <span id="workout-score">0</span> pts
+            </div>
+          </div>
+        </div>
+
+        <div id="workout-content" class="bg-white rounded-3xl p-4 sm:p-6 md:p-8 border border-slate-200 shadow-md min-h-[360px] flex flex-col justify-center"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: ADD WORD -->
+  <div id="modal-add-word" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-3">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 animate-pop">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base sm:text-lg font-black text-slate-900">Новое слово</h3>
+        <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveSingleWord(event)" class="mt-4 space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Английское слово / фраза *</label>
+          <input type="text" id="add-word-en" required placeholder="например: ubiquitous" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Русский перевод *</label>
+          <input type="text" id="add-word-ru" required placeholder="например: вездесущий" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Контекст предложения</label>
+          <textarea id="add-word-context" rows="2" placeholder="Smartphones have become ubiquitous." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeAddModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Отмена</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: MASS ADD -->
+  <div id="modal-mass-add" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-3">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 animate-pop">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base sm:text-lg font-black text-slate-900">Массовый импорт слов</h3>
+        <button type="button" onclick="closeMassAddModal()" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
+      </div>
+
+      <div class="mt-3 space-y-3">
+        <p class="text-xs text-slate-500">Вставьте строки формата: <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600">word — перевод — пример контекста</code></p>
+        <textarea id="mass-add-input" rows="7" placeholder="gorgeous — великолепный — What a gorgeous morning!
+persevere — упорствовать — You must persevere." class="w-full p-3 rounded-2xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20"></textarea>
+
+        <div class="flex items-center justify-end gap-2">
+          <button type="button" onclick="closeMassAddModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Отмена</button>
+          <button type="button" onclick="handleProcessMassAdd()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md">Импортировать</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    /* Full Initial Vocabulary Dataset */
+    const RAW_USER_VOCABULARY = [
+      { en: "upset", ru: "расстроенный", context: "He was deeply upset after hearing the bad news." },
+      { en: "contains", ru: "содержит", context: "This orange juice contains no added sugar." },
+      { en: "pleasant", ru: "приятный, приятно", context: "We had a very pleasant walk in the park today." },
+      { en: "getting thin", ru: "редеют", context: "He noticed his hair was getting thin at the top." },
+      { en: "though", ru: "хотя", context: "The jacket is expensive, though it is made of real leather." },
+      { en: "earrings", ru: "серьги", context: "She bought a pair of silver earrings for the party." },
+      { en: "scissors", ru: "ножницы", context: "Please use sharp scissors to cut this paper." },
+      { en: "luggage", ru: "багаж", context: "Don't leave your luggage unattended at the airport." },
+      { en: "advice", ru: "совет", context: "My father gave me some very useful advice about money." },
+      { en: "timely", ru: "своевременный, своевременно", context: "Thanks to his timely arrival, the meeting started on schedule." },
+      { en: "useful", ru: "полезный", context: "The dictionary contains a lot of useful phrases for travelers." },
+      { en: "mouse", ru: "мышь", context: "The cat chased a small mouse across the room." },
+      { en: "mice", ru: "мыши", context: "There are two field mice hiding in the barn." },
+      { en: "tray", ru: "поднос", context: "The waiter brought our drinks on a wooden tray." },
+      { en: "such", ru: "такой, подобный", context: "I have never seen such a big dog before." },
+      { en: "it is common knowledge", ru: "всем известно", context: "It is common knowledge that regular exercise is good for health." },
+      { en: "accident", ru: "дорожное происшествие, авария", context: "Nobody was hurt in the minor traffic accident." },
+      { en: "honest", ru: "честный", context: "He gave an honest answer to every question." },
+      { en: "buns", ru: "булочки, пирожки", context: "She bought fresh cinnamon buns from the local bakery." },
+      { en: "private", ru: "личный, частный", context: "This is a private conversation, so please step outside." },
+      { en: "which", ru: "который", context: "He chose the car which uses less fuel." },
+      { en: "not far from", ru: "недалеко от", context: "Our hotel is not far from the city center." },
+      { en: "How are you getting on?", ru: "Как жизнь? Как поживаешь?", context: "Long time no see, how are you getting on?" },
+      { en: "What is the matter?", ru: "Что случилось?", context: "You look worried, what is the matter?" },
+      { en: "duties", ru: "обязанности", context: "Checking tickets is one of his daily duties." },
+      { en: "in the morning", ru: "утром", context: "I usually drink black coffee in the morning." },
+      { en: "in the afternoon", ru: "днём", context: "The team will discuss the project in the afternoon." },
+      { en: "in the evening", ru: "вечером", context: "We like to watch a movie together in the evening." },
+      { en: "at night", ru: "ночью", context: "It becomes very cold in the desert at night." },
+      { en: "at noon", ru: "в полдень", context: "The bell rings every day exactly at noon." },
+      { en: "at midnight", ru: "в полночь", context: "The train arrives at the station at midnight." },
+      { en: "in / inside", ru: "внутри", context: "It was raining, so we stayed inside the house." },
+      { en: "on", ru: "на, сверху", context: "Leave your passport on the table." },
+      { en: "at", ru: "рядом, у", context: "Let's meet at the bus stop." },
+      { en: "near", ru: "недалеко, около", context: "I live near the subway station." },
+      { en: "under", ru: "под", context: "The cat fell asleep under the bed." },
+      { en: "above", ru: "над", context: "There is a beautiful painting above the fireplace." },
+      { en: "between", ru: "между", context: "The ball stopped between two cars." },
+      { en: "below", ru: "ниже уровня", context: "The temperature dropped below zero last night." },
+      { en: "among", ru: "среди", context: "She felt relaxed among close friends." },
+      { en: "round / around", ru: "вокруг", context: "We sat around the campfire to keep warm." },
+      { en: "next to / by / beside", ru: "рядом, около", context: "Sit down beside me and take a rest." },
+      { en: "opposite", ru: "напротив", context: "The pharmacy is located directly opposite the supermarket." },
+      { en: "behind", ru: "за, позади", context: "The keys slipped behind the sofa." },
+      { en: "in front of", ru: "перед", context: "Park your bicycle right in front of the entrance." },
+      { en: "against", ru: "упираясь, облокотившись", context: "He leaned his bicycle against the wall." },
+      { en: "off", ru: "с поверхности", context: "Take your feet off the couch." },
+      { en: "out of", ru: "из, наружу", context: "He walked out of the office at five o'clock." },
+      { en: "onto", ru: "на поверхность", context: "The cat jumped onto the kitchen counter." },
+      { en: "into", ru: "внутрь", context: "Put the documents into the blue folder." },
+      { en: "through", ru: "сквозь, через", context: "We walked through the forest until sunset." },
+      { en: "up", ru: "вверх", context: "Walk up the stairs to reach the second floor." },
+      { en: "down", ru: "вниз", context: "Be careful when you go down the ladder." },
+      { en: "over", ru: "через, поверх", context: "The dog easily jumped over the wooden fence." },
+      { en: "along", ru: "вдоль", context: "They spent the evening walking along the riverbank." },
+      { en: "broadcasting", ru: "вещание", context: "He is hoping to find a job in radio broadcasting." },
+      { en: "insurance", ru: "страхование", context: "You should buy travel insurance before going abroad." },
+      { en: "labour-intensive", ru: "трудоёмкий", context: "Traditional farming is still a very labour-intensive process." },
+      { en: "responsible", ru: "ответственный", context: "Who is responsible for organizing this event?" },
+      { en: "churn", ru: "штамповать, производить в больших количествах", context: "The studio began to churn out low-budget movies every month." },
+      { en: "productivity", ru: "производительность", context: "A quiet working environment helps increase employee productivity." },
+      { en: "shortage", ru: "дефицит, нехватка", context: "The hospital faced an acute shortage of qualified nurses." },
+      { en: "major", ru: "главный, крупный", context: "Tourism plays a major role in the local economy." },
+      { en: "increase", ru: "увеличение, рост", context: "There has been a significant increase in oil prices this month." },
+      { en: "remains", ru: "остатки, останки", context: "Archaeologists discovered the ancient dinosaur remains in the desert." },
+      { en: "wares", ru: "товары", context: "Local merchants displayed their handmade wares at the town market." },
+      { en: "fill in", ru: "заполнять", context: "Please fill in this application form before the interview." },
+      { en: "rarely", ru: "редко", context: "She rarely eats fast food because she prefers healthy cooking." },
+      { en: "rare", ru: "редкий", context: "It is very rare to see this species of bird in the city." },
+      { en: "meal", ru: "приём пищи, блюдо", context: "Breakfast is considered the most important meal of the day." },
+      { en: "trade fair", ru: "торговая ярмарка, выставка", context: "Companies from all over the world gathered at the annual trade fair." },
+      { en: "complain", ru: "жаловаться", context: "Customers often complain when the delivery is delayed." },
+      { en: "complaint", ru: "жалоба", context: "He filed an official complaint against the poor customer service." },
+      { en: "purchasing agent", ru: "закупщик, агент по закупкам", context: "The purchasing agent negotiated a discount with the new supplier." },
+      { en: "to liaise", ru: "поддерживать связь, взаимодействовать", context: "She will liaise directly with the marketing department on this campaign." },
+      { en: "negotiate", ru: "обговаривать, вести переговоры", context: "We need to negotiate the final price before signing the contract." },
+      { en: "both", ru: "оба, обе", context: "Both options look attractive to our team." },
+      { en: "to wish sb every success", ru: "желать кому-то всяческих успехов", context: "We want to wish him every success in his new role at the company." },
+      { en: "currently", ru: "в настоящее время", context: "The system is currently unavailable due to technical maintenance." },
+      { en: "gather", ru: "собирать", context: "Analysts need more time to gather accurate data on the market." },
+      { en: "provide", ru: "предоставлять, обеспечивать", context: "The school will provide all necessary books for the students." },
+      { en: "patience", ru: "терпение", context: "Teaching young kids requires a huge amount of patience." },
+      { en: "fifty", ru: "пятьдесят", context: "More than fifty people attended yesterday's seminar." },
+      { en: "fifteen", ru: "пятнадцать", context: "The break will last for fifteen minutes." },
+      { en: "teenager", ru: "подросток", context: "As a teenager, he spent most of his free time playing guitar." },
+      { en: "cut down on", ru: "сократить потребление", context: "The doctor advised him to cut down on sugar and salt." },
+      { en: "cut out", ru: "полностью исключить", context: "She decided to cut out dairy products from her diet." },
+      { en: "luxurious", ru: "роскошный", context: "They spent a week at a luxurious hotel in Dubai." },
+      { en: "flirt", ru: "флиртовать / флирт", context: "He couldn't help but flirt with the waitress at dinner." },
+      { en: "crisps", ru: "чипсы", context: "A packet of salted crisps is his favorite snack while watching TV." },
+      { en: "crispy", ru: "хрустящий", context: "The chicken was cooked until the skin turned golden and crispy." },
+      { en: "feel", ru: "чувствовать, осязать", context: "You can feel the soft texture of this silk fabric." },
+      { en: "fill", ru: "наполнять", context: "Don't forget to fill the water bottle before the hike." },
+      { en: "one may say", ru: "можно сказать", context: "One may say that technology has completely changed how we live." },
+      { en: "weary", ru: "утомлённый, усталый", context: "After a twelve-hour flight, the travelers looked completely weary." },
+      { en: "intolerance", ru: "непереносимость", context: "He suffers from lactose intolerance and avoids regular milk." },
+      { en: "deserve", ru: "заслуживать", context: "After such hard work, you deserve a proper holiday." },
+      { en: "disturb", ru: "беспокоить", context: "Please put the sign on the door so nobody will disturb our meeting." },
+      { en: "sleepy", ru: "сонный", context: "A heavy lunch always makes me feel warm and sleepy." },
+      { en: "drowsy", ru: "сонливый, вялый", context: "These allergy pills can make you drowsy, so do not drive." },
+      { en: "hollow", ru: "полый, пустой внутри", context: "The squirrel hid nuts inside an old hollow tree trunk." },
+      { en: "chief", ru: "главный, руководитель", context: "Lack of funding was the chief reason for the project's delay." },
+      { en: "mischief", ru: "шалость, озорство", context: "The little boys were up to some harmless mischief in the garden." },
+      { en: "opportunity", ru: "возможность", context: "Studying abroad is a wonderful opportunity to learn a language." },
+      { en: "ability", ru: "способность, умение", context: "She has a natural ability to solve complex math problems quickly." },
+      { en: "hostage", ru: "заложник", context: "The police worked carefully to free every hostage without injuries." },
+      { en: "hold hostage", ru: "держать в заложниках", context: "The criminals threatened to hold hostage anyone inside the bank." },
+      { en: "relative", ru: "родственник / относительный", context: "We visited an elderly relative who lives in the countryside." },
+      { en: "average", ru: "средний, среднестатистический", context: "The average temperature in July rarely drops below twenty degrees." },
+      { en: "spat", ru: "небольшая ссора, перепалка", context: "The couple had a brief spat over who forgot to wash the dishes." },
+      { en: "row", ru: "шумная ссора", context: "They had a loud row in the restaurant and left separately." },
+      { en: "argument", ru: "спор, ссора", context: "A silly misunderstanding turned into a heated argument." },
+      { en: "argue", ru: "спорить, ссориться", context: "It is pointless to argue when both sides refuse to listen." },
+      { en: "quarrel", ru: "ссора / ссориться", context: "They resolved their old quarrel and became friends again." },
+      { en: "once in a blue moon", ru: "крайне редко, в кои-то веки", context: "My brother lives across the country, so I see him only once in a blue moon." },
+      { en: "swelling", ru: "отёк, припухлость", context: "Put some ice on your ankle to reduce the swelling." },
+      { en: "stitches", ru: "швы", context: "The doctor will remove your surgical stitches in ten days." },
+      { en: "shy", ru: "стеснительный", context: "He was too shy to raise his hand and ask a question." },
+      { en: "mean", ru: "жадный, злой", context: "Don't be so mean to your little sister." },
+      { en: "quick / quickly", ru: "быстрый / быстро", context: "She gave a quick answer and quickly left the room." },
+      { en: "quiet", ru: "тихий, спокойный", context: "It is nice to read a book in a quiet library corner." },
+      { en: "affect", ru: "влиять, воздействовать", context: "Lack of proper sleep can seriously affect your mental health." },
+      { en: "affection", ru: "привязанность, нежность", context: "The dog showed deep affection toward its new owner." },
+      { en: "affectionate", ru: "ласковый, нежный", context: "She is an affectionate mother who hugs her children often." },
+      { en: "anxiety", ru: "тревожность, беспокойство", context: "Deep breathing techniques can help ease sudden anxiety." },
+      { en: "anxious", ru: "тревожный, обеспокоенный", context: "He felt nervous and anxious right before taking the exam." },
+      { en: "competition", ru: "соревнование, конкуренция", context: "Our team took first place in the regional sports competition." },
+      { en: "competitive", ru: "соревновательный, склонный к соперничеству", context: "He is very competitive and hates losing even simple board games." },
+      { en: "imaginative", ru: "с богатым воображением", context: "The child wrote an imaginative story about friendly dragons." },
+      { en: "imaginary", ru: "воображаемый, вымышленный", context: "As a toddler, she played with an imaginary friend." },
+      { en: "depend on", ru: "зависеть от", context: "The final results depend on your personal effort and discipline." },
+      { en: "independent", ru: "независимый, самостоятельный", context: "She moved out early because she wanted to become fully independent." },
+      { en: "insecure", ru: "неуверенный в себе, закомплексованный", context: "He feels insecure when speaking in front of large audiences." },
+      { en: "insecurity", ru: "комплекс, неуверенность", context: "Therapy helped her overcome a long-standing physical insecurity." },
+      { en: "mature", ru: "зрелый, взрослый", context: "For a teenager, he handled the crisis in a very mature way." },
+      { en: "immature", ru: "незрелый, ребяческий", context: "Making silly jokes during a funeral is completely immature behavior." },
+      { en: "moody", ru: "хмурый, с перепадами настроения", context: "Lack of morning coffee always makes him grumpy and moody." },
+      { en: "patient", ru: "терпеливый", context: "A great teacher remains calm and patient with beginners." },
+      { en: "impatient", ru: "нетерпеливый", context: "The driver became impatient while waiting in the traffic jam." },
+      { en: "rebel", ru: "бунтарь / бунтовать", context: "As a student, he was a true rebel who questioned every rule." },
+      { en: "rebellious", ru: "бунтарский, непокорный", context: "Many adolescents go through an openly rebellious phase." },
+      { en: "rely on", ru: "полагаться на", context: "You can always rely on your true friends in tough times." },
+      { en: "reliable", ru: "надёжный", context: "This old car is remarkably reliable and never breaks down." },
+      { en: "self-confident", ru: "уверенный в себе", context: "Her self-confident attitude impressed the interviewers immediately." },
+      { en: "overconfident", ru: "самонадеянный, чересчур уверенный", context: "Being overconfident caused him to underestimate his opponent." },
+      { en: "selfish", ru: "эгоистичный, себялюбивый", context: "It was selfish of him to eat the whole cake alone." },
+      { en: "egoist", ru: "эгоист", context: "Nobody wants to work with an egoist who cares only about himself." },
+      { en: "sense", ru: "чувство, здравый смысл", context: "His practical advice always makes good sense." },
+      { en: "sensible", ru: "разумный, благоразумный", context: "It would be sensible to check the weather forecast before sailing." },
+      { en: "sensitive", ru: "чувствительный, восприимчивый", context: "He has delicate, sensitive skin that sunburns easily." },
+      { en: "spoilt", ru: "избалованный / испорченный", context: "The spoilt child threw a tantrum when denied a new toy." },
+      { en: "stubborn", ru: "упрямый", context: "He is too stubborn to admit when he makes a mistake." },
+      { en: "outgoing", ru: "общительный, открытый", context: "Being naturally outgoing, she easily makes friends wherever she goes." }
+    ];
+
+    /* Numbers Curriculum Data */
+    const NUMBERS_CURRICULUM = [
+      {
+        id: 1,
+        title: "Карточка 1: Фундамент (1 – 12)",
+        rule: "Эти 12 чисел не подчиняются общим правилам суффиксов. Их нужно знать наизусть.",
+        examples: [
+          { num: "0", en: "zero / oh", tip: "oh — в телефонных номерах" },
+          { num: "1", en: "one", tip: "[wʌn]" },
+          { num: "2", en: "two", tip: "[tuː]" },
+          { num: "3", en: "three", tip: "межзубный [θ]" },
+          { num: "4", en: "four", tip: "" },
+          { num: "5", en: "five", tip: "" },
+          { num: "6", en: "six", tip: "" },
+          { num: "7", en: "seven", tip: "" },
+          { num: "8", en: "eight", tip: "немая «gh»" },
+          { num: "9", en: "nine", tip: "" },
+          { num: "10", en: "ten", tip: "" },
+          { num: "11", en: "eleven", tip: "уникальное слово" },
+          { num: "12", en: "twelve", tip: "уникальное слово" }
+        ]
+      },
+      {
+        id: 2,
+        title: "Карточка 2: «Подростковые» числа (13 – 19)",
+        rule: "Суффикс -teen (teenager). Ударение падает строго на суффикс: four-TEEN, six-TEEN.",
+        examples: [
+          { num: "13", en: "thirteen", tip: "корень меняется!" },
+          { num: "14", en: "fourteen", tip: "four-TEEN" },
+          { num: "15", en: "fifteen", tip: "не fiveteen!" },
+          { num: "16", en: "sixteen", tip: "six-TEEN" },
+          { num: "17", en: "seventeen", tip: "seven-TEEN" },
+          { num: "18", en: "eighteen", tip: "одна буква t" },
+          { num: "19", en: "nineteen", tip: "nine-TEEN" }
+        ]
+      },
+      {
+        id: 3,
+        title: "Карточка 3: Десятки (20, 30 ... 90)",
+        rule: "Суффикс -ty. Ударение строго на 1-й слог: THIR-ty, FIF-ty. Ловушка: fif-TEEN vs FIF-ty.",
+        examples: [
+          { num: "20", en: "twenty", tip: "" },
+          { num: "30", en: "thirty", tip: "THIR-ty" },
+          { num: "40", en: "forty", tip: "Внимание: без «u»! Не fourty." },
+          { num: "50", en: "fifty", tip: "FIF-ty" },
+          { num: "60", en: "sixty", tip: "SIX-ty" },
+          { num: "70", en: "seventy", tip: "SEVEN-ty" },
+          { num: "80", en: "eighty", tip: "одна t" },
+          { num: "90", en: "ninety", tip: "NINE-ty" }
+        ]
+      },
+      {
+        id: 4,
+        title: "Карточка 4: Составные числа (21 – 99)",
+        rule: "Все двузначные числа от 21 до 99 пишутся строго через дефис (-).",
+        examples: [
+          { num: "21", en: "twenty-one", tip: "через дефис" },
+          { num: "35", en: "thirty-five", tip: "через дефис" },
+          { num: "48", en: "forty-eight", tip: "через дефис" },
+          { num: "73", en: "seventy-three", tip: "через дефис" },
+          { num: "99", en: "ninety-nine", tip: "через дефис" }
+        ]
+      },
+      {
+        id: 5,
+        title: "Карточка 5: Сотни (100 – 999)",
+        rule: "Hundred не принимает окончание -s с точной цифрой. В British English ставят «and».",
+        examples: [
+          { num: "100", en: "one hundred", tip: "или a hundred" },
+          { num: "200", en: "two hundred", tip: "Ни в коем случае не two hundreds!" },
+          { num: "105", en: "one hundred and five", tip: "союз and" },
+          { num: "250", en: "two hundred and fifty", tip: "two hundred + and fifty" },
+          { num: "482", en: "four hundred and eighty-two", tip: "дефис между 80 и 2" }
+        ]
+      },
+      {
+        id: 6,
+        title: "Карточка 6: Большие масштабы",
+        rule: "thousand (1 000), million (1 000 000), billion (1 000 000 000). Тысячи разделяются запятой!",
+        examples: [
+          { num: "1,000", en: "one thousand", tip: "запятая в записи" },
+          { num: "5,000", en: "five thousand", tip: "без -s" },
+          { num: "10,000", en: "ten thousand", tip: "десять тысяч" },
+          { num: "1,000,000", en: "one million", tip: "миллион" }
+        ]
+      },
+      {
+        id: 7,
+        title: "Карточка 7: Ловушка S или без S?",
+        rule: "Точное число: БЕЗ -s (two hundred books). Неопределенно: С -s + of (hundreds of books).",
+        examples: [
+          { num: "✅", en: "two hundred books", tip: "Точно: ❌ two hundreds запрещено" },
+          { num: "✅", en: "five thousand dollars", tip: "Точно: ❌ five thousands запрещено" },
+          { num: "🌟", en: "hundreds of students", tip: "Неопределенно: сотни (нужен «of»)" },
+          { num: "🌟", en: "thousands of cars", tip: "Неопределенно: тысячи машин" }
+        ]
+      },
+      {
+        id: 8,
+        title: "Карточка 8: Порядковые (Который по счету?)",
+        rule: "Суффикс -th + артикль the. Исключения: the first (1st), the second (2nd), the third (3rd).",
+        examples: [
+          { num: "1-й", en: "the first (1st)", tip: "исключение" },
+          { num: "2-й", en: "the second (2nd)", tip: "исключение" },
+          { num: "3-й", en: "the third (3rd)", tip: "исключение" },
+          { num: "5-й", en: "the fifth (5th)", tip: "five → fifth" },
+          { num: "12-й", en: "the twelfth (12th)", tip: "twelve → twelfth" },
+          { num: "21-й", en: "the twenty-first (21st)", tip: "только последнее слово порядковое" }
+        ]
+      },
+      {
+        id: 9,
+        title: "Карточка 9: Года, дроби, телефоны",
+        rule: "Года делим пополам: 1984 = nineteen eighty-four. Дроби: 3.14 = three point one four.",
+        examples: [
+          { num: "1984", en: "nineteen eighty-four", tip: "19 + 84" },
+          { num: "2024", en: "twenty twenty-four", tip: "20 + 24" },
+          { num: "3.14", en: "three point one four", tip: "точка = point" },
+          { num: "1/2", en: "one half", tip: "половина" },
+          { num: "3/4", en: "three quarters", tip: "три четверти" }
+        ]
+      }
+    ];
+
+    /* Global State */
+    let words = RAW_USER_VOCABULARY.map((item, idx) => ({
+      id: (idx + 1).toString(),
+      en: item.en,
+      ru: item.ru,
+      context: item.context || "",
+      status: 'learning',
+      correctCount: 0,
+      wrongCount: 0,
+      dateAdded: Date.now() - idx * 1000
+    }));
+
+    let currentTab = 'flashcards-view';
+    let currentWorkout = null;
+
+    let dedicatedFcList = [...words];
+    let dedicatedFcIndex = 0;
+    let isDedicatedFcFlipped = false;
+
+    let currentSelectedNumCardIdx = 0;
+    let numberGame = {
+      mode: 'teenty',
+      round: 0,
+      totalRounds: 10,
+      score: 0,
+      currentQuestion: null,
+      answered: false,
+      history: []
+    };
+
+    let audioCtxInstance = null;
+    function getAudioContext() {
+      if (!audioCtxInstance) {
+        audioCtxInstance = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtxInstance.state === 'suspended') {
+        audioCtxInstance.resume();
+      }
+      return audioCtxInstance;
+    }
+
+    function playBeep(type = 'success') {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const now = ctx.currentTime;
+
+        if (type === 'success') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.2);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } else if (type === 'flip') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(420, now);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        }
+      } catch (e) {}
+    }
+
+    function speakWord(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.92;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-900 text-white'
+      };
+
+      toast.className = `${bgColors[type] || bgColors.info} px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-3 opacity-0 pointer-events-auto`;
+      toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('translate-y-3', 'opacity-0'));
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      const views = {
+        'flashcards-view': document.getElementById('view-flashcards'),
+        'numbers-view': document.getElementById('view-numbers'),
+        'dictionary': document.getElementById('view-dictionary'),
+        'train': document.getElementById('view-train')
+      };
+
+      const navBtns = {
+        'flashcards-view': document.getElementById('nav-flashcards'),
+        'numbers-view': document.getElementById('nav-numbers'),
+        'dictionary': document.getElementById('nav-dictionary'),
+        'train': document.getElementById('nav-train')
+      };
+
+      const activeCls = "px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-sm shrink-0";
+      const inactiveCls = "px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center gap-1.5 shrink-0";
+
+      Object.keys(views).forEach(k => {
+        if (views[k]) views[k].classList.add('hidden');
+        if (navBtns[k]) navBtns[k].className = inactiveCls;
+      });
+
+      if (views[tab]) views[tab].classList.remove('hidden');
+      if (navBtns[tab]) navBtns[tab].className = activeCls;
+
+      if (tab === 'flashcards-view') {
+        applyFlashcardFilter();
+      } else if (tab === 'numbers-view') {
+        initNumbersView();
+      } else if (tab === 'dictionary') {
+        renderVocabularyList();
+      } else if (tab === 'train') {
+        const arena = document.getElementById('workout-arena');
+        const menu = document.getElementById('train-menu-view');
+        if (arena && menu) {
+          arena.classList.add('hidden');
+          menu.classList.remove('hidden');
+        }
+      }
+      updateStats();
+    }
+
+    function applyFlashcardFilter() {
+      const mode = document.getElementById('fc-filter-mode')?.value || 'all';
+      if (mode === 'learning') {
+        dedicatedFcList = words.filter(w => w.status !== 'mastered');
+      } else if (mode === 'mastered') {
+        dedicatedFcList = words.filter(w => w.status === 'mastered');
+      } else {
+        dedicatedFcList = [...words];
+      }
+
+      if (dedicatedFcList.length === 0) {
+        dedicatedFcList = [...words];
+      }
+
+      dedicatedFcIndex = 0;
+      isDedicatedFcFlipped = false;
+      renderDedicatedFlashcard();
+    }
+
+    function shuffleFlashcards() {
+      dedicatedFcList = shuffle(dedicatedFcList);
+      dedicatedFcIndex = 0;
+      isDedicatedFcFlipped = false;
+      renderDedicatedFlashcard();
+      showToast('Карточки перемешаны 🔀', 'info');
+    }
+
+    function renderDedicatedFlashcard() {
+      if (dedicatedFcList.length === 0) return;
+      if (dedicatedFcIndex >= dedicatedFcList.length) dedicatedFcIndex = 0;
+      if (dedicatedFcIndex < 0) dedicatedFcIndex = dedicatedFcList.length - 1;
+
+      const word = dedicatedFcList[dedicatedFcIndex];
+      const enEl = document.getElementById('fc-card-en');
+      const ruEl = document.getElementById('fc-card-ru');
+      const ctxEl = document.getElementById('fc-card-context');
+      const ctxBox = document.getElementById('fc-card-context-box');
+      const badgeEl = document.getElementById('fc-card-status-badge');
+      const idxEl = document.getElementById('fc-current-idx');
+      const totalEl = document.getElementById('fc-total-count');
+      const inner = document.getElementById('dedicated-card-inner');
+
+      if (enEl) enEl.innerText = word.en;
+      if (ruEl) ruEl.innerText = word.ru;
+      if (idxEl) idxEl.innerText = (dedicatedFcIndex + 1).toString();
+      if (totalEl) totalEl.innerText = dedicatedFcList.length.toString();
+
+      if (ctxEl && ctxBox) {
+        if (word.context && word.context.trim().length > 0) {
+          ctxEl.innerText = `"${word.context}"`;
+          ctxBox.classList.remove('hidden');
+        } else {
+          ctxBox.classList.add('hidden');
+        }
+      }
+
+      if (badgeEl) {
+        if (word.status === 'mastered') {
+          badgeEl.className = "px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+          badgeEl.innerText = "Выучено ⭐";
+        } else {
+          badgeEl.className = "px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/10 text-indigo-200";
+          badgeEl.innerText = "В процессе";
+        }
+      }
+
+      // Reset flip
+      isDedicatedFcFlipped = false;
+      if (inner) inner.classList.remove('rotate-y-180');
+    }
+
+    function toggleDedicatedFlashcard() {
+      const inner = document.getElementById('dedicated-card-inner');
+      if (!inner) return;
+      isDedicatedFcFlipped = !isDedicatedFcFlipped;
+      playBeep('flip');
+      if (isDedicatedFcFlipped) inner.classList.add('rotate-y-180');
+      else inner.classList.remove('rotate-y-180');
+    }
+
+    function nextDedicatedCard() {
+      if (dedicatedFcList.length === 0) return;
+      dedicatedFcIndex = (dedicatedFcIndex + 1) % dedicatedFcList.length;
+      renderDedicatedFlashcard();
+    }
+
+    function prevDedicatedCard() {
+      if (dedicatedFcList.length === 0) return;
+      dedicatedFcIndex = (dedicatedFcIndex - 1 + dedicatedFcList.length) % dedicatedFcList.length;
+      renderDedicatedFlashcard();
+    }
+
+    function markFcCard(isMastered) {
+      if (dedicatedFcList.length === 0) return;
+      const word = dedicatedFcList[dedicatedFcIndex];
+      word.status = isMastered ? 'mastered' : 'learning';
+      if (isMastered) {
+        word.correctCount = (word.correctCount || 0) + 1;
+        playBeep('success');
+      } else {
+        word.wrongCount = (word.wrongCount || 0) + 1;
+        playBeep('flip');
+      }
+      updateStats();
+      nextDedicatedCard();
+    }
+
+    function playCurrentFcAudio() {
+      if (dedicatedFcList.length === 0) return;
+      const word = dedicatedFcList[dedicatedFcIndex];
+      speakWord(word.en);
+    }
+
+    function renderVocabularyList() {
+      const container = document.getElementById('vocab-cards-container');
+      const emptyState = document.getElementById('vocab-empty-state');
+      if (!container) return;
+
+      const query = (document.getElementById('vocab-search')?.value || '').trim().toLowerCase();
+      const statusFilter = document.getElementById('vocab-filter-status')?.value || 'all';
+
+      const filtered = words.filter(item => {
+        const matchesQuery = !query || 
+          item.en.toLowerCase().includes(query) || 
+          item.ru.toLowerCase().includes(query) || 
+          (item.context && item.context.toLowerCase().includes(query));
+
+        if (!matchesQuery) return false;
+
+        if (statusFilter === 'learning') return item.status !== 'mastered';
+        if (statusFilter === 'mastered') return item.status === 'mastered';
+        if (statusFilter === 'has_context') return Boolean(item.context && item.context.trim());
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+      }
+
+      if (emptyState) emptyState.classList.add('hidden');
+
+      container.innerHTML = filtered.map(item => `
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between gap-3 hover:border-indigo-300 transition-colors">
+          <div class="space-y-1.5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="font-extrabold text-slate-900 text-base">${escapeHtml(item.en)}</span>
+                <button type="button" onclick="speakWord('${escapeHtml(item.en)}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Произношение">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                </button>
+              </div>
+              <button type="button" onclick="toggleWordMastered('${item.id}')" class="text-xs font-bold px-2 py-0.5 rounded-full transition-colors ${item.status === 'mastered' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
+                ${item.status === 'mastered' ? 'Выучено ⭐' : 'В процессе'}
+              </button>
+            </div>
+            <div class="text-slate-700 text-sm font-semibold">${escapeHtml(item.ru)}</div>
+            ${item.context ? `<div class="text-xs text-slate-500 italic bg-slate-50 p-2 rounded-xl border border-slate-100">"${escapeHtml(item.context)}"</div>` : ''}
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Ответов: ✅ ${item.correctCount || 0} / ❌ ${item.wrongCount || 0}</span>
+            <button type="button" onclick="deleteWord('${item.id}')" class="text-rose-500 hover:text-rose-700 font-bold p-1">Удалить</button>
+          </div>
+        </div>
+      `).join('');
+
+      updateStats();
+    }
+
+    function toggleWordMastered(id) {
+      const word = words.find(w => w.id === id);
+      if (word) {
+        word.status = word.status === 'mastered' ? 'learning' : 'mastered';
+        renderVocabularyList();
+        updateStats();
+      }
+    }
+
+    function deleteWord(id) {
+      words = words.filter(w => w.id !== id);
+      dedicatedFcList = dedicatedFcList.filter(w => w.id !== id);
+      renderVocabularyList();
+      updateStats();
+      showToast('Слово удалено', 'info');
+    }
+
+    function updateStats() {
+      const total = words.length;
+      const withCtx = words.filter(w => w.context && w.context.trim()).length;
+      const mastered = words.filter(w => w.status === 'mastered').length;
+      const learning = total - mastered;
+
+      const badge = document.getElementById('badge-total-count');
+      if (badge) badge.innerText = total.toString();
+
+      const elTotal = document.getElementById('stat-total');
+      const elCtx = document.getElementById('stat-with-context');
+      const elMastered = document.getElementById('stat-mastered');
+      const elLearning = document.getElementById('stat-learning');
+
+      if (elTotal) elTotal.innerText = total.toString();
+      if (elCtx) elCtx.innerText = withCtx.toString();
+      if (elMastered) elMastered.innerText = mastered.toString();
+      if (elLearning) elLearning.innerText = learning.toString();
+    }
+
+    /* Modal Single Add */
+    function openAddModal() {
+      const m = document.getElementById('modal-add-word');
+      if (m) m.classList.replace('hidden', 'flex');
+      setTimeout(() => document.getElementById('add-word-en')?.focus(), 50);
+    }
+    function closeAddModal() {
+      const m = document.getElementById('modal-add-word');
+      if (m) m.classList.replace('flex', 'hidden');
+    }
+    function handleSaveSingleWord(e) {
+      e.preventDefault();
+      const en = (document.getElementById('add-word-en')?.value || '').trim();
+      const ru = (document.getElementById('add-word-ru')?.value || '').trim();
+      const context = (document.getElementById('add-word-context')?.value || '').trim();
+
+      if (!en || !ru) return;
+
+      words.unshift({
+        id: Date.now().toString(),
+        en, ru, context,
+        status: 'learning',
+        correctCount: 0,
+        wrongCount: 0,
+        dateAdded: Date.now()
+      });
+
+      dedicatedFcList.unshift(words[0]);
+      closeAddModal();
+      e.target.reset();
+      renderVocabularyList();
+      updateStats();
+      showToast(`Слово «${en}» добавлено!`, 'success');
+    }
+
+    /* Modal Mass Add */
+    function openMassAddModal() {
+      const m = document.getElementById('modal-mass-add');
+      if (m) m.classList.replace('hidden', 'flex');
+      setTimeout(() => document.getElementById('mass-add-input')?.focus(), 50);
+    }
+    function closeMassAddModal() {
+      const m = document.getElementById('modal-mass-add');
+      if (m) m.classList.replace('flex', 'hidden');
+    }
+    function handleProcessMassAdd() {
+      const val = (document.getElementById('mass-add-input')?.value || '').trim();
+      if (!val) return;
+
+      const lines = val.split('\n').map(l => l.trim()).filter(Boolean);
+      let count = 0;
+
+      lines.forEach((line, i) => {
+        let clean = line.replace(/^[•\-\*]\s*/, '');
+        let parts = clean.split(/\s*[-—|]\s*/);
+        if (parts.length >= 2) {
+          const en = parts[0].trim();
+          const ru = parts[1].trim();
+          const context = parts.slice(2).join(' — ').trim();
+          if (en && ru) {
+            words.push({
+              id: (Date.now() + i).toString(),
+              en, ru, context,
+              status: 'learning',
+              correctCount: 0,
+              wrongCount: 0,
+              dateAdded: Date.now()
+            });
+            count++;
+          }
+        }
+      });
+
+      dedicatedFcList = [...words];
+      closeMassAddModal();
+      document.getElementById('mass-add-input').value = '';
+      renderVocabularyList();
+      updateStats();
+      showToast(`Добавлено ${count} новых слов!`, 'success');
+    }
+
+    /* JSON Export & Import */
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(words, null, 2));
+      const dl = document.createElement('a');
+      dl.setAttribute("href", dataStr);
+      dl.setAttribute("download", `lingocraft_backup_${new Date().toISOString().slice(0, 10)}.json`);
+      dl.click();
+      showToast('Словарь экспортирован в JSON!', 'success');
+    }
+
+    function importDataJSON(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            words = parsed;
+            dedicatedFcList = [...words];
+            renderVocabularyList();
+            applyFlashcardFilter();
+            updateStats();
+            showToast(`Успешно импортировано ${words.length} слов!`, 'success');
+          }
+        } catch (err) {
+          showToast('Ошибка при чтении JSON файла', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function initNumbersView() {
+      selectNumberCard(currentSelectedNumCardIdx);
+    }
+
+    function switchNumbersSubTab(tab) {
+      const rulesTab = document.getElementById('num-subtab-rules');
+      const gameTab = document.getElementById('num-subtab-game');
+      const btnRules = document.getElementById('btn-num-tab-rules');
+      const btnGame = document.getElementById('btn-num-tab-game');
+
+      if (tab === 'rules') {
+        rulesTab.classList.remove('hidden');
+        gameTab.classList.add('hidden');
+        btnRules.className = "px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-900 text-white shadow-sm transition-all";
+        btnGame.className = "px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-slate-600 hover:bg-slate-100 transition-all";
+      } else {
+        rulesTab.classList.add('hidden');
+        gameTab.classList.remove('hidden');
+        btnGame.className = "px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-900 text-white shadow-sm transition-all";
+        btnRules.className = "px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-slate-600 hover:bg-slate-100 transition-all";
+      }
+    }
+
+    function selectNumberCard(idx) {
+      currentSelectedNumCardIdx = idx;
+      const card = NUMBERS_CURRICULUM[idx];
+      const container = document.getElementById('num-card-display-container');
+      if (!container || !card) return;
+
+      // Update chip styling
+      const chips = document.querySelectorAll('.num-chip-btn');
+      chips.forEach((c, i) => {
+        if (i === idx) {
+          c.className = "num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-amber-500 bg-amber-500 text-white font-bold shadow-sm";
+        } else {
+          c.className = "num-chip-btn whitespace-nowrap px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold";
+        }
+      });
+
+      container.innerHTML = `
+        <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 animate-pop">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-900">${escapeHtml(card.title)}</h2>
+            <p class="text-xs sm:text-sm text-slate-600 mt-1 whitespace-pre-line leading-relaxed">${escapeHtml(card.rule)}</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-2">
+            ${card.examples.map(ex => `
+              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2 hover:bg-amber-50/50 transition-colors">
+                <div>
+                  <div class="font-extrabold text-slate-900 text-sm sm:text-base">${escapeHtml(ex.num)} <span class="text-slate-400 font-normal">—</span> <span class="text-amber-800">${escapeHtml(ex.en)}</span></div>
+                  ${ex.tip ? `<div class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(ex.tip)}</div>` : ''}
+                </div>
+                <button type="button" onclick="speakWord('${escapeHtml(ex.en.replace(/[()]/g, ''))}')" class="p-1.5 rounded-xl bg-white text-slate-500 hover:text-amber-600 border border-slate-200 shadow-xs" title="Слушать">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function startNumberGameMode(mode) {
+      numberGame = {
+        mode,
+        round: 1,
+        totalRounds: 10,
+        score: 0,
+        answered: false,
+        history: []
+      };
+
+      document.getElementById('num-game-selector').classList.add('hidden');
+      document.getElementById('num-game-arena').classList.remove('hidden');
+      nextNumberGameRound();
+    }
+
+    function exitNumberGame() {
+      document.getElementById('num-game-arena').classList.add('hidden');
+      document.getElementById('num-game-selector').classList.remove('hidden');
+    }
+
+    function nextNumberGameRound() {
+      if (numberGame.round > numberGame.totalRounds) {
+        renderNumberGameSummary();
+        return;
+      }
+
+      numberGame.answered = false;
+      document.getElementById('ng-round-idx').innerText = numberGame.round.toString();
+      document.getElementById('ng-score').innerText = numberGame.score.toString();
+
+      const board = document.getElementById('ng-interactive-board');
+      if (numberGame.mode === 'teenty') {
+        const pairs = [
+          { num1: '13', en1: 'thirteen', num2: '30', en2: 'thirty' },
+          { num1: '14', en1: 'fourteen', num2: '40', en2: 'forty' },
+          { num1: '15', en1: 'fifteen', num2: '50', en2: 'fifty' },
+          { num1: '16', en1: 'sixteen', num2: '60', en2: 'sixty' },
+          { num1: '17', en1: 'seventeen', num2: '70', en2: 'seventy' },
+          { num1: '18', en1: 'eighteen', num2: '80', en2: 'eighty' },
+          { num1: '19', en1: 'nineteen', num2: '90', en2: 'ninety' }
+        ];
+        const p = pairs[Math.floor(Math.random() * pairs.length)];
+        const pickFirst = Math.random() > 0.5;
+        const targetNum = pickFirst ? p.num1 : p.num2;
+        const targetEn = pickFirst ? p.en1 : p.en2;
+        numberGame.currentQuestion = { targetNum, targetEn, altNum: pickFirst ? p.num2 : p.num1 };
+
+        board.innerHTML = `
+          <div class="text-center space-y-4">
+            <span class="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full uppercase">Слушайте произношение</span>
+            <div class="py-2">
+              <button type="button" onclick="speakWord('${targetEn}')" class="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2 mx-auto">
+                <span>🔊 Нажмите, чтобы прослушать</span>
+              </button>
+            </div>
+            <p class="text-xs text-slate-500">Какое число произносит диктор?</p>
+            <div class="grid grid-cols-2 gap-3 max-w-xs mx-auto pt-2">
+              <button type="button" onclick="handleNumberGameAnswer('${p.num1}')" class="p-4 rounded-2xl border-2 border-slate-200 font-black text-2xl hover:border-amber-500 bg-slate-50 transition-all">${p.num1}</button>
+              <button type="button" onclick="handleNumberGameAnswer('${p.num2}')" class="p-4 rounded-2xl border-2 border-slate-200 font-black text-2xl hover:border-amber-500 bg-slate-50 transition-all">${p.num2}</button>
+            </div>
+          </div>
+        `;
+        speakWord(targetEn);
+      } else {
+        // Quick Rules Mode
+        const questions = [
+          { q: "Как правильно: «200 книг»?", correct: "two hundred books", wrong: "two hundreds books", tip: "Точное число всегда БЕЗ -s!" },
+          { q: "Как сказать: «сотни студентов»?", correct: "hundreds of students", wrong: "hundred of students", tip: "Неопределенно = с -s и предлогом of" },
+          { q: "Как пишется число 40?", correct: "forty", wrong: "fourty", tip: "Буква «u» выпадает!" },
+          { q: "Как читается год 1984?", correct: "nineteen eighty-four", wrong: "one thousand nine hundred eighty-four", tip: "Года делятся пополам: 19 + 84" }
+        ];
+        const qItem = questions[Math.floor(Math.random() * questions.length)];
+        const isCorrectFirst = Math.random() > 0.5;
+        const opt1 = isCorrectFirst ? qItem.correct : qItem.wrong;
+        const opt2 = isCorrectFirst ? qItem.wrong : qItem.correct;
+        numberGame.currentQuestion = { q: qItem.q, correct: qItem.correct, tip: qItem.tip };
+
+        board.innerHTML = `
+          <div class="text-center space-y-4">
+            <h3 class="text-base sm:text-lg font-black text-slate-900">${escapeHtml(qItem.q)}</h3>
+            <div class="grid grid-cols-1 gap-2.5 max-w-sm mx-auto pt-2">
+              <button type="button" onclick="handleNumberGameAnswer('${escapeHtml(opt1)}')" class="p-3.5 rounded-2xl border-2 border-slate-200 text-sm font-bold hover:border-emerald-500 bg-slate-50 transition-all text-left">${escapeHtml(opt1)}</button>
+              <button type="button" onclick="handleNumberGameAnswer('${escapeHtml(opt2)}')" class="p-3.5 rounded-2xl border-2 border-slate-200 text-sm font-bold hover:border-emerald-500 bg-slate-50 transition-all text-left">${escapeHtml(opt2)}</button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function handleNumberGameAnswer(ans) {
+      if (numberGame.answered) return;
+      numberGame.answered = true;
+      const q = numberGame.currentQuestion;
+      const isRight = (numberGame.mode === 'teenty' ? ans === q.targetNum : ans === q.correct);
+
+      if (isRight) {
+        playBeep('success');
+        numberGame.score += 10;
+      } else {
+        playBeep('wrong');
+      }
+
+      numberGame.history.push({
+        selected: ans,
+        isCorrect: isRight,
+        correct: numberGame.mode === 'teenty' ? q.targetNum : q.correct
+      });
+
+      setTimeout(() => {
+        numberGame.round++;
+        nextNumberGameRound();
+      }, 700);
+    }
+
+    function renderNumberGameSummary() {
+      const board = document.getElementById('ng-interactive-board');
+      const correctCount = numberGame.history.filter(h => h.isCorrect).length;
+      playBeep('success');
+
+      board.innerHTML = `
+        <div class="text-center space-y-4 animate-pop">
+          <div class="text-3xl">🏆</div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900">Раунд завершён!</h2>
+          <p class="text-slate-600 text-sm">Правильно: <b>${correctCount} из ${numberGame.totalRounds}</b></p>
+          <div class="text-2xl font-black text-amber-600">${numberGame.score} очков</div>
+          <button type="button" onclick="exitNumberGame()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs sm:text-sm">
+            Вернуться в меню числительных
+          </button>
+        </div>
+      `;
+    }
+
+    function startMode(mode) {
+      document.getElementById('train-menu-view').classList.add('hidden');
+      document.getElementById('workout-arena').classList.remove('hidden');
+
+      if (mode === 'matching') initMatchingMode();
+      else if (mode === 'quiz') initQuizMode();
+      else if (mode === 'typing') initTypingMode();
+      else if (mode === 'context') initContextMode();
+      else if (mode === 'flashcards') initBatchFlashcardsMode();
+      else if (mode === 'crossword') initCrosswordMode();
+    }
+
+    function exitWorkout() {
+      document.getElementById('workout-arena').classList.add('hidden');
+      document.getElementById('train-menu-view').classList.remove('hidden');
+    }
+
+    function updateWorkoutProgress(cur, total, score) {
+      const elCur = document.getElementById('workout-current-step');
+      const elTot = document.getElementById('workout-total-step');
+      const elBar = document.getElementById('workout-progress-bar');
+      const elSco = document.getElementById('workout-score');
+
+      if (elCur) elCur.innerText = cur.toString();
+      if (elTot) elTot.innerText = total.toString();
+      if (elBar) elBar.style.width = `${Math.round((cur / total) * 100)}%`;
+      if (elSco) elSco.innerText = score.toString();
+    }
+
+    function initMatchingMode() {
+      const selected = shuffle(words).slice(0, 6);
+      const enCards = selected.map(w => ({ id: w.id, text: w.en, type: 'en', word: w }));
+      const ruCards = selected.map(w => ({ id: w.id, text: w.ru, type: 'ru', word: w }));
+      const allCards = shuffle([...enCards, ...ruCards]);
+
+      currentWorkout = {
+        name: 'matching',
+        cards: allCards,
+        selectedCard: null,
+        matchedCount: 0,
+        totalPairs: selected.length,
+        score: 0,
+        errorsMap: {},
+        words: selected
+      };
+
+      updateWorkoutProgress(1, selected.length, 0);
+      renderMatchingBoard();
+    }
+
+    function renderMatchingBoard() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+
+      arena.innerHTML = `
+        <div class="text-center mb-4">
+          <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full uppercase">Сопоставление пар</span>
+          <p class="text-xs text-slate-400 mt-1">Нажимайте на английское слово и его русский перевод</p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-w-xl mx-auto w-full">
+          ${w.cards.map((c, idx) => `
+            <button type="button" 
+              id="match-card-${idx}" 
+              onclick="handleMatchingClick(${idx})"
+              class="p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all bg-white border-slate-200 text-slate-800 hover:border-indigo-400">
+              ${escapeHtml(c.text)}
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function handleMatchingClick(idx) {
+      const w = currentWorkout;
+      const card = w.cards[idx];
+      const cardBtn = document.getElementById(`match-card-${idx}`);
+      if (!cardBtn || cardBtn.disabled) return;
+
+      if (!w.selectedCard) {
+        w.selectedCard = { card, idx };
+        cardBtn.className = "p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm";
+      } else {
+        if (w.selectedCard.idx === idx) return; // same card clicked
+        const prev = w.selectedCard;
+        const prevBtn = document.getElementById(`match-card-${prev.idx}`);
+
+        if (prev.card.id === card.id && prev.card.type !== card.type) {
+          // MATCH!
+          playBeep('success');
+          speakWord(card.word.en);
+          w.score += 15;
+          w.matchedCount++;
+
+          prevBtn.className = "p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all border-emerald-500 bg-emerald-50 text-emerald-700 opacity-60";
+          cardBtn.className = "p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all border-emerald-500 bg-emerald-50 text-emerald-700 opacity-60";
+          prevBtn.disabled = true;
+          cardBtn.disabled = true;
+
+          w.selectedCard = null;
+          updateWorkoutProgress(w.matchedCount, w.totalPairs, w.score);
+
+          if (w.matchedCount >= w.totalPairs) {
+            setTimeout(renderMatchingReviewSummary, 600);
+          }
+        } else {
+          // WRONG
+          playBeep('wrong');
+          w.errorsMap[card.id] = true;
+          w.errorsMap[prev.card.id] = true;
+
+          cardBtn.className = "p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all border-rose-500 bg-rose-50 text-rose-700 match-shake";
+          prevBtn.className = "p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all border-rose-500 bg-rose-50 text-rose-700 match-shake";
+
+          w.selectedCard = null;
+          setTimeout(() => {
+            if (cardBtn && !cardBtn.disabled) cardBtn.className = "p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all bg-white border-slate-200 text-slate-800";
+            if (prevBtn && !prevBtn.disabled) prevBtn.className = "p-3 sm:p-4 rounded-2xl border-2 font-bold text-xs sm:text-sm text-center transition-all bg-white border-slate-200 text-slate-800";
+          }, 600);
+        }
+      }
+    }
+
+    function renderMatchingReviewSummary() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      playBeep('success');
+      arena.innerHTML = `
+        <div class="text-center space-y-4 animate-pop max-w-md mx-auto">
+          <div class="text-3xl">🎉</div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900">Все пары найдены!</h2>
+          <p class="text-slate-600 text-xs sm:text-sm">Отличная реакция и память.</p>
+          <div class="text-2xl font-black text-indigo-600">${w.score} очков</div>
+          <div class="flex items-center justify-center gap-2 pt-2">
+            <button type="button" onclick="initMatchingMode()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs sm:text-sm">Ещё раз</button>
+            <button type="button" onclick="exitWorkout()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm">В меню</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function initQuizMode() {
+      const selected = shuffle(words).slice(0, 10);
+      currentWorkout = {
+        name: 'quiz',
+        queue: selected,
+        currentIndex: 0,
+        score: 0,
+        answered: false,
+        history: []
+      };
+      updateWorkoutProgress(1, selected.length, 0);
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      const target = w.queue[w.currentIndex];
+      w.answered = false;
+
+      const isEnToRu = Math.random() > 0.4;
+      const questionText = isEnToRu ? target.en : target.ru;
+      const correctAnswer = isEnToRu ? target.ru : target.en;
+
+      const others = words.filter(item => item.id !== target.id);
+      const wrong = shuffle(others).slice(0, 3).map(item => isEnToRu ? item.ru : item.en);
+      const options = shuffle([correctAnswer, ...wrong]);
+
+      w.currentCorrect = correctAnswer;
+      w.currentOptions = options;
+
+      arena.innerHTML = `
+        <div class="text-center mb-5">
+          <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full uppercase">
+            ${isEnToRu ? 'Перевод с английского' : 'Перевод на английский'}
+          </span>
+          <div class="flex items-center justify-center gap-2 mt-3">
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900">${escapeHtml(questionText)}</h2>
+            ${isEnToRu ? `
+              <button type="button" onclick="speakWord('${escapeHtml(target.en)}')" class="p-1 rounded-xl text-indigo-600 hover:bg-indigo-50">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+              </button>
+            ` : ''}
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Выберите 1 правильный вариант</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg mx-auto w-full">
+          ${options.map((opt, idx) => `
+            <button type="button" id="quiz-btn-${idx}" onclick="handleQuizAnswer('${escapeHtml(opt)}', ${idx})"
+              class="p-3.5 rounded-2xl border-2 border-slate-200 text-left font-semibold text-xs sm:text-sm text-slate-800 bg-slate-50 hover:bg-white hover:border-emerald-400 transition-all">
+              ${escapeHtml(opt)}
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      if (isEnToRu) speakWord(target.en);
+    }
+
+    function handleQuizAnswer(selected, idx) {
+      const w = currentWorkout;
+      if (w.answered) return;
+      w.answered = true;
+
+      const target = w.queue[w.currentIndex];
+      const clickedBtn = document.getElementById(`quiz-btn-${idx}`);
+      const isRight = selected === w.currentCorrect;
+
+      w.history.push({ target, selected, correct: w.currentCorrect, isCorrect: isRight });
+
+      if (isRight) {
+        playBeep('success');
+        w.score += 15;
+        target.correctCount = (target.correctCount || 0) + 1;
+        clickedBtn.className = "p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold text-xs sm:text-sm";
+      } else {
+        playBeep('wrong');
+        target.wrongCount = (target.wrongCount || 0) + 1;
+        clickedBtn.className = "p-3.5 rounded-2xl border-2 border-rose-500 bg-rose-50 text-rose-800 font-bold text-xs sm:text-sm match-shake";
+
+        // Highlight correct button
+        w.currentOptions.forEach((opt, i) => {
+          if (opt === w.currentCorrect) {
+            const rightBtn = document.getElementById(`quiz-btn-${i}`);
+            if (rightBtn) rightBtn.className = "p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-100 text-emerald-900 font-bold text-xs sm:text-sm";
+          }
+        });
+      }
+
+      setTimeout(() => {
+        w.currentIndex++;
+        if (w.currentIndex >= w.queue.length) {
+          renderQuizReviewSummary();
+        } else {
+          updateWorkoutProgress(w.currentIndex + 1, w.queue.length, w.score);
+          renderQuizQuestion();
+        }
+      }, isRight ? 650 : 1300);
+    }
+
+    function renderQuizReviewSummary() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      const correctCount = w.history.filter(h => h.isCorrect).length;
+      playBeep('success');
+
+      arena.innerHTML = `
+        <div class="space-y-4 animate-pop max-w-lg mx-auto">
+          <div class="text-center">
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900">Тест завершён!</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">Результат: <b>${correctCount} из ${w.queue.length}</b> правильно</p>
+          </div>
+
+          <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+            ${w.history.map((h, i) => `
+              <div class="p-2.5 rounded-xl border ${h.isCorrect ? 'border-emerald-200 bg-emerald-50/50' : 'border-rose-200 bg-rose-50/50'} text-xs flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-slate-900">${h.target.en}</span> — <span class="text-slate-600">${h.target.ru}</span>
+                  ${!h.isCorrect ? `<div class="text-rose-600 mt-0.5">Ваш ответ: ${escapeHtml(h.selected)} (Верно: ${escapeHtml(h.correct)})</div>` : ''}
+                </div>
+                <span class="font-bold shrink-0 ${h.isCorrect ? 'text-emerald-700' : 'text-rose-600'}">${h.isCorrect ? '✅' : '❌'}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="flex items-center justify-center gap-2 pt-2">
+            <button type="button" onclick="initQuizMode()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm">Ещё раз</button>
+            <button type="button" onclick="exitWorkout()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm">В меню</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function initTypingMode() {
+      const selected = shuffle(words).slice(0, 10);
+      currentWorkout = {
+        name: 'typing',
+        queue: selected,
+        currentIndex: 0,
+        score: 0,
+        history: []
+      };
+      updateWorkoutProgress(1, selected.length, 0);
+      renderTypingArena();
+    }
+
+    function renderTypingArena() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      const target = w.queue[w.currentIndex];
+
+      arena.innerHTML = `
+        <div class="text-center mb-5">
+          <span class="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full uppercase">Правописание</span>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900 mt-3">${escapeHtml(target.ru)}</h2>
+          <p class="text-xs text-slate-400 mt-1">Введите слово на английском</p>
+        </div>
+
+        <form onsubmit="handleTypingSubmit(event)" class="max-w-md mx-auto w-full space-y-3">
+          <input type="text" id="typing-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type in English..."
+            class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 text-base font-bold text-center focus:outline-none focus:border-amber-500">
+
+          <div class="flex items-center justify-between">
+            <button type="button" onclick="revealTypingHint()" class="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+              💡 Подсказка
+            </button>
+            <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs sm:text-sm">
+              Проверить
+            </button>
+          </div>
+
+          <div id="typing-feedback" class="text-center text-xs font-bold min-h-[20px]"></div>
+        </form>
+      `;
+
+      setTimeout(() => document.getElementById('typing-input')?.focus(), 50);
+    }
+
+    function revealTypingHint() {
+      const w = currentWorkout;
+      const target = w.queue[w.currentIndex];
+      const inp = document.getElementById('typing-input');
+      if (inp) {
+        inp.value = target.en.slice(0, 2);
+        inp.focus();
+      }
+    }
+
+    function handleTypingSubmit(e) {
+      e.preventDefault();
+      const w = currentWorkout;
+      const target = w.queue[w.currentIndex];
+      const inp = document.getElementById('typing-input');
+      const feedback = document.getElementById('typing-feedback');
+      const val = (inp?.value || '').trim().toLowerCase();
+      const expected = target.en.toLowerCase();
+
+      if (val === expected) {
+        playBeep('success');
+        speakWord(target.en);
+        w.score += 20;
+        inp.className = "w-full px-4 py-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-base font-bold text-center text-emerald-800";
+        feedback.className = "text-emerald-600 text-center text-xs font-bold";
+        feedback.innerText = "Правильно!";
+
+        setTimeout(() => {
+          w.currentIndex++;
+          if (w.currentIndex >= w.queue.length) {
+            renderTypingSummary();
+          } else {
+            updateWorkoutProgress(w.currentIndex + 1, w.queue.length, w.score);
+            renderTypingArena();
+          }
+        }, 700);
+      } else {
+        playBeep('wrong');
+        inp.classList.add('border-rose-500', 'bg-rose-50', 'match-shake');
+        feedback.className = "text-rose-600 text-center text-xs font-bold";
+        feedback.innerText = `Правильный ответ: ${target.en}`;
+        setTimeout(() => inp.classList.remove('match-shake'), 400);
+      }
+    }
+
+    function renderTypingSummary() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      playBeep('success');
+      arena.innerHTML = `
+        <div class="text-center space-y-4 animate-pop max-w-md mx-auto">
+          <div class="text-3xl">✍️</div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900">Спринт завершён!</h2>
+          <div class="text-2xl font-black text-amber-600">${w.score} очков</div>
+          <div class="flex items-center justify-center gap-2 pt-2">
+            <button type="button" onclick="initTypingMode()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs sm:text-sm">Ещё раз</button>
+            <button type="button" onclick="exitWorkout()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm">В меню</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function initContextMode() {
+      const withCtx = words.filter(w => w.context && w.context.trim().length > 0);
+      if (withCtx.length < 3) {
+        showToast('Нужно хотя бы 3 слова с контекстом!', 'error');
+        exitWorkout();
+        return;
+      }
+
+      currentWorkout = {
+        name: 'context',
+        queue: shuffle(withCtx).slice(0, 8),
+        currentIndex: 0,
+        score: 0
+      };
+      updateWorkoutProgress(1, currentWorkout.queue.length, 0);
+      renderContextQuestion();
+    }
+
+    function renderContextQuestion() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      const target = w.queue[w.currentIndex];
+
+      const reg = new RegExp(target.en, 'gi');
+      const masked = target.context.replace(reg, '___________');
+
+      const others = words.filter(i => i.id !== target.id);
+      const wrong = shuffle(others).slice(0, 3).map(i => i.en);
+      const choices = shuffle([target.en, ...wrong]);
+
+      arena.innerHTML = `
+        <div class="text-center mb-5">
+          <span class="text-xs font-bold text-pink-700 bg-pink-50 px-3 py-1 rounded-full uppercase">Вставка в контекст</span>
+          <div class="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base italic max-w-md mx-auto">
+            "${escapeHtml(masked)}"
+          </div>
+          <p class="text-xs text-slate-400 mt-2 font-semibold">Подсказка: «${escapeHtml(target.ru)}»</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 max-w-md mx-auto w-full">
+          ${choices.map((ch, idx) => `
+            <button type="button" id="ctx-btn-${idx}" onclick="handleContextAnswer('${escapeHtml(ch)}', '${escapeHtml(target.en)}', ${idx})"
+              class="p-3 rounded-2xl border-2 border-slate-200 font-bold text-xs sm:text-sm text-center bg-slate-50 hover:bg-white hover:border-pink-400 transition-all">
+              ${escapeHtml(ch)}
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function handleContextAnswer(chosen, expected, idx) {
+      const w = currentWorkout;
+      const btn = document.getElementById(`ctx-btn-${idx}`);
+      const isRight = chosen.toLowerCase() === expected.toLowerCase();
+
+      if (isRight) {
+        playBeep('success');
+        w.score += 20;
+        btn.className = "p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold text-xs sm:text-sm";
+      } else {
+        playBeep('wrong');
+        btn.className = "p-3 rounded-2xl border-2 border-rose-500 bg-rose-50 text-rose-800 font-bold text-xs sm:text-sm match-shake";
+      }
+
+      setTimeout(() => {
+        w.currentIndex++;
+        if (w.currentIndex >= w.queue.length) {
+          renderContextSummary();
+        } else {
+          updateWorkoutProgress(w.currentIndex + 1, w.queue.length, w.score);
+          renderContextQuestion();
+        }
+      }, isRight ? 600 : 1100);
+    }
+
+    function renderContextSummary() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      playBeep('success');
+      arena.innerHTML = `
+        <div class="text-center space-y-4 animate-pop max-w-md mx-auto">
+          <div class="text-3xl">🎯</div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900">Раунд контекста завершён!</h2>
+          <div class="text-2xl font-black text-pink-600">${w.score} очков</div>
+          <div class="flex items-center justify-center gap-2 pt-2">
+            <button type="button" onclick="initContextMode()" class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl text-xs sm:text-sm">Ещё раз</button>
+            <button type="button" onclick="exitWorkout()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm">В меню</button>
+          </div>
+        </div>
+      `;
+    }
+
+    /* Batch Flashcards */
+    function initBatchFlashcardsMode() {
+      currentWorkout = {
+        name: 'batch_fc',
+        queue: shuffle(words).slice(0, 10),
+        currentIndex: 0,
+        score: 0
+      };
+      updateWorkoutProgress(1, currentWorkout.queue.length, 0);
+      renderBatchFlashcard();
+    }
+
+    function renderBatchFlashcard() {
+      const arena = document.getElementById('workout-content');
+      const w = currentWorkout;
+      const target = w.queue[w.currentIndex];
+
+      arena.innerHTML = `
+        <div class="text-center mb-3">
+          <span class="text-xs font-bold text-violet-700 bg-violet-50 px-3 py-1 rounded-full uppercase">Флэш-карточка</span>
+        </div>
+
+        <div class="max-w-sm mx-auto w-full bg-slate-900 text-white p-6 rounded-3xl text-center shadow-lg border border-indigo-500/30 space-y-3">
+          <h2 class="text-2xl sm:text-3xl font-black">${escapeHtml(target.en)}</h2>
+          ${target.context ? `<p class="text-xs text-indigo-200 italic">"${escapeHtml(target.context)}"</p>` : ''}
+          <div id="batch-fc-ans" class="hidden text-emerald-400 font-bold text-lg pt-2 border-t border-white/10">${escapeHtml(target.ru)}</div>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button type="button" onclick="document.getElementById('batch-fc-ans').classList.toggle('hidden')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm">
+            Показать перевод
+          </button>
+          <button type="button" onclick="nextBatchFlashcard(true)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm">
+            Знаю ⭐
+          </button>
+        </div>
+      `;
+    }
+
+    function nextBatchFlashcard(known) {
+      const w = currentWorkout;
+      if (known) w.score += 10;
+      w.currentIndex++;
+      if (w.currentIndex >= w.queue.length) {
+        exitWorkout();
+        showToast('Сессия повторения завершена!', 'success');
+      } else {
+        updateWorkoutProgress(w.currentIndex + 1, w.queue.length, w.score);
+        renderBatchFlashcard();
+      }
+    }
+
+    function initCrosswordMode() {
+      const pool = words.filter(w => /^[a-zA-Z]{3,8}$/.test(w.en.trim()));
+      const selected = shuffle(pool).slice(0, 4);
+
+      currentWorkout = {
+        name: 'crossword',
+        words: selected,
+        score: 0
+      };
+
+      const arena = document.getElementById('workout-content');
+      arena.innerHTML = `
+        <div class="space-y-4 max-w-lg mx-auto">
+          <div class="text-center">
+            <span class="text-xs font-bold text-teal-700 bg-teal-50 px-3 py-1 rounded-full uppercase">Кроссворд-Блиц</span>
+            <p class="text-xs text-slate-400 mt-1">Впишите английские слова по русским определениям</p>
+          </div>
+
+          <div class="space-y-3">
+            ${selected.map((w, idx) => `
+              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+                <div class="text-xs sm:text-sm font-bold text-slate-800">${idx + 1}. ${escapeHtml(w.ru)} (${w.en.length} букв)</div>
+                <input type="text" id="cw-word-${idx}" maxlength="${w.en.length}" autocomplete="off"
+                  class="w-28 sm:w-36 px-2 py-1.5 rounded-xl border border-slate-300 font-mono text-center font-bold text-xs uppercase focus:outline-none focus:border-teal-500">
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="flex items-center justify-center gap-2 pt-2">
+            <button type="button" onclick="checkCrosswordBlitz()" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md">
+              Проверить ответы
+            </button>
+            <button type="button" onclick="exitWorkout()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm">
+              Назад
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function checkCrosswordBlitz() {
+      const w = currentWorkout;
+      let correct = 0;
+
+      w.words.forEach((item, idx) => {
+        const inp = document.getElementById(`cw-word-${idx}`);
+        if (!inp) return;
+        if (inp.value.trim().toLowerCase() === item.en.toLowerCase()) {
+          inp.className = "w-28 sm:w-36 px-2 py-1.5 rounded-xl border-2 border-emerald-500 bg-emerald-50 font-mono text-center font-bold text-xs uppercase text-emerald-800";
+          correct++;
+        } else {
+          inp.className = "w-28 sm:w-36 px-2 py-1.5 rounded-xl border-2 border-rose-500 bg-rose-50 font-mono text-center font-bold text-xs uppercase text-rose-800";
+        }
+      });
+
+      if (correct === w.words.length) {
+        playBeep('success');
+        showToast('Все слова разгаданы верно! 🏆', 'success');
+      } else {
+        playBeep('wrong');
+        showToast(`Разгадано: ${correct} из ${w.words.length}`, 'info');
+      }
+    }
+
+    // Keyboard shortcuts for Mac / Desktop
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (currentTab === 'flashcards-view') {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          toggleDedicatedFlashcard();
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          nextDedicatedCard();
+        } else if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          prevDedicatedCard();
+        }
+      }
+    });
+
+    // Boot up
+    window.addEventListener('DOMContentLoaded', () => {
+      switchTab('flashcards-view');
+      renderVocabularyList();
+      updateStats();
+    });
+  </script>
+</body>
+</html>

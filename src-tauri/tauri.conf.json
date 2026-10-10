@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "LingoCraft",
+  "version": "0.1.0",
+  "identifier": "com.pavelsajgin.lingocraft",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "LingoCraft",
+        "width": 1000,
+        "height": 700
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNGODI4QkM5OEY1OTY1MDkKUldRSlpWbVB5WXVDUDlRclNOTHF0TDQyMFJ0b2p3Ty90R0tpci84aGxycFhxa1lWMkNyQXgrbEcK",
+      "endpoints": [
+        "https://github.com/sayginpavel-oss/lingocraft/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}
